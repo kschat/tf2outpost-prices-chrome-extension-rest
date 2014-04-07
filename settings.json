@@ -1,0 +1,17 @@
+{
+  "cache": {
+    "timeoutInMinutes": 10
+  },
+
+  "backpack.tf": {
+    "host": "http://backpack.tf",
+    "route": "api/IGetPrices/v4",
+    "params": {
+      "key": "514ce50eba2536c86e000006",
+      "appid": "440",
+      "format": "json",
+      "raw": true,
+      "compress": true
+    }
+  }
+}
