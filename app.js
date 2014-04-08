@@ -36,6 +36,20 @@ function getPrices(url, def) {
 }
 
 function updatePrices(p) {
+  p = p.response;
+
+  var items = p.items
+    , newItems = {};
+
+  for(var i in items) {
+    var item = items[i]
+      , defIndex = item.defindex[0];
+
+    item.itemName = i;
+    newItems[defIndex] = item;
+  }
+
+  p.items = newItems;
   prices = p;
 }
 
