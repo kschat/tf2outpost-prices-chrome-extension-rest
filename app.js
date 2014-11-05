@@ -14,8 +14,8 @@ var settings = require('./settings.json')
 
 function buildUrl(host, route, params) {
   var qStr = Object.keys(bp.params)
-    .map(function(val, i) { 
-      return (!i ? '?' : '&') + val + '=' + bp.params[val]; 
+    .map(function(val, i) {
+      return (!i ? '?' : '&') + val + '=' + bp.params[val];
     })
     .join('');
 
@@ -43,8 +43,11 @@ function updatePrices(p) {
     , newItems = {};
 
   for(var i in items) {
+    if(!items.hasOwnProperty(i)) { continue; }
     var item = items[i]
-      , defIndex = item.defindex[0];
+      , defIndex = (item.defindex || [])[0];
+
+    if(!defIndex) { continue; }
 
     item.itemName = i;
     newItems[defIndex] = item;
@@ -73,4 +76,8 @@ getPrices(bpUrl)
     server.listen(process.env.PORT || 8080, function() {
       console.log('%s listening at %s', server.name, server.url);
     });
+  })
+  .catch(function(err) {
+    console.log(err.stack);
   });
+
