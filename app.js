@@ -1,83 +1,81 @@
-'use strict';
+import q from 'q';
+import request from 'request';
+import restify from 'restify';
+import URL from 'url';
+import settings from './settings.json';
 
+const server = restify.createServer();
+const bp = settings['backpack.tf'];
+const bpUrl = URL.format(bp);
+const timeout = settings.cache.timeoutInMinutes * 60 * 1000;
 
-var settings = require('./settings.json')
-  , q = require('q')
-  , request = require('request')
-  , restify = require('restify')
-  , server = restify.createServer()
+var prices = {};
 
-  , bp = settings['backpack.tf']
-  , prices = {}
-  , bpUrl = buildUrl(bp.host, bp.route, bp.params)
-  , timeout = (settings.cache.timeoutInMinutes * 60 * 1000);
+const getPrices = (url, def) => {
+  const deferred = def || q.defer();
 
-function buildUrl(host, route, params) {
-  var qStr = Object.keys(bp.params)
-    .map(function(val, i) {
-      return (!i ? '?' : '&') + val + '=' + bp.params[val];
-    })
-    .join('');
+  request(url, (err, res, body) => {
+    if(err) { return deferred.reject(err); }
 
-  return [host, route, qStr].join('/');
-}
-
-function getPrices(url, def) {
-  var deferred = def || q.defer();
-
-  request(url, function(err, res, body) {
     if(res.headers['retry-after']) {
-      return setTimeout(getPrices.bind(null, url, deferred), res.headers['retry-after'] * 1000);
+      return setTimeout(
+        getPrices.bind(null, url, deferred),
+        res.headers['retry-after'] * 1000
+      );
     }
 
-    deferred.resolve(JSON.parse(body));
+    try {
+      deferred.resolve(JSON.parse(body));
+    }
+    catch(ex) {
+      deferred.reject(ex);
+    }
   });
 
   return deferred.promise;
-}
+};
 
-function updatePrices(p) {
+const updatePrices = (p) => {
   p = p.response;
 
-  var items = p.items
-    , newItems = {};
+  p.items = Object.keys(p.items).reduce((acc, item, index) => {
+    item = p.items[item];
+    const defIndex = (item.defindex || [])[0];
 
-  for(var i in items) {
-    if(!items.hasOwnProperty(i)) { continue; }
-    var item = items[i]
-      , defIndex = (item.defindex || [])[0];
+    if(!defIndex) { return; }
 
-    if(!defIndex) { continue; }
+    item.itemName = index;
 
-    item.itemName = i;
-    newItems[defIndex] = item;
-  }
+    acc[defIndex] = item;
 
-  p.items = newItems;
+    return acc;
+  }, {});
+
   prices = p;
-}
+};
 
 getPrices(bpUrl)
   .then(updatePrices)
 
   .then(function refreshPrices() {
-    setTimeout(function() {
+    setTimeout(() => {
       getPrices(bpUrl)
         .then(updatePrices)
         .then(refreshPrices);
     }, timeout);
   })
 
-  .then(function() {
-    server.get('/prices', function(req, res, next) {
+  .then(() => {
+    server.get('/prices', (req, res, next) => {
       res.send(200, prices);
     });
 
-    server.listen(process.env.PORT || 8080, function() {
+    server.listen(process.env.PORT || 8080, () => {
       console.log('%s listening at %s', server.name, server.url);
     });
   })
-  .catch(function(err) {
+
+  .catch((err) => {
     console.log(err.stack);
   });
 

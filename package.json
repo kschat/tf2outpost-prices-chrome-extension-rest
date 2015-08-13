@@ -15,9 +15,10 @@
   },
   "license": "MIT",
   "dependencies": {
-    "restify": "^2.7.0",
+    "babel": "^5.8.21",
+    "q": "^1.0.1",
     "request": "^2.34.0",
-    "q": "^1.0.1"
+    "restify": "^2.7.0"
   },
   "devDependencies": {}
 }
