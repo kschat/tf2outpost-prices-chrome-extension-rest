@@ -17,6 +17,7 @@
   "dependencies": {
     "babel": "^5.8.21",
     "q": "^1.0.1",
+    "ramda": "^0.17.1",
     "request": "^2.34.0",
     "restify": "^2.7.0"
   },

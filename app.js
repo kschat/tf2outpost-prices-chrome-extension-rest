@@ -1,3 +1,4 @@
+import { merge } from 'ramda';
 import q from 'q';
 import request from 'request';
 import restify from 'restify';
@@ -38,15 +39,21 @@ const getPrices = (url, def) => {
 const updatePrices = (p) => {
   p = p.response;
 
-  p.items = Object.keys(p.items).reduce((acc, item, index) => {
-    item = p.items[item];
-    const defIndex = (item.defindex || [])[0];
+  p.items = Object.keys(p.items).reduce((acc, itemName) => {
+    const item = p.items[itemName];
+    let defIndex = (item.defindex || [])[0];
+
+    if(/australium/i.test(itemName)) { defIndex += 'a'; }
 
     if(!defIndex) { return; }
 
-    item.itemName = index;
+    item.itemName = itemName;
 
-    acc[defIndex] = item;
+    if(!acc[defIndex]) { acc[defIndex] = item; }
+
+    acc[defIndex].prices = acc[defIndex]
+      ? merge(acc[defIndex].prices, item.prices)
+      : item.prices;
 
     return acc;
   }, {});
@@ -68,6 +75,14 @@ getPrices(bpUrl)
   .then(() => {
     server.get('/prices', (req, res, next) => {
       res.send(200, prices);
+    });
+
+    server.get('/prices/:id', (req, res, next) => {
+      const price = prices.items[req.params.id];
+
+      return price
+        ? res.send(200, price)
+        : res.send(404);
     });
 
     server.listen(process.env.PORT || 8080, () => {
