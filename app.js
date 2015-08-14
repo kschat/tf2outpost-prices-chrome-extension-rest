@@ -43,7 +43,9 @@ const updatePrices = (p) => {
     const item = p.items[itemName];
     let defIndex = (item.defindex || [])[0];
 
-    if(/australium/i.test(itemName)) { defIndex += 'a'; }
+    if(/australium/i.test(itemName) && !/gold$/i.test(itemName)) {
+      defIndex += 'a';
+    }
 
     if(!defIndex) { return; }
 
