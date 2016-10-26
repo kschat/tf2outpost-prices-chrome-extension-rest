@@ -47,7 +47,7 @@ const updatePrices = (p) => {
       defIndex += 'a';
     }
 
-    if(!defIndex) { return; }
+    if(!defIndex) { return acc; }
 
     item.itemName = itemName;
 
